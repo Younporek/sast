@@ -1,0 +1,73 @@
+TEAMCITY — TP N°3 MAROCDOCS / SAST
+=================================
+
+Projet : FORMATION_DEVSECOPS_TP3
+Build Configuration : 01-PIPELINE-SAST-MAROCDOCS
+VCS Root : Git, branche refs/heads/main
+
+IMPORTANT : ces scripts s'exécutent sur la VM Ubuntu Build Agent.
+Prérequis : Bandit doit être installé au chemin ci-dessous et accessible
+au compte du service TeamCity Agent.
+
+[STEP 01] 01 - Tests Python
+Runner type : Command Line
+Run : Custom script
+Execute step : Only if build status is successful
+
+set -eu
+python3 -m unittest discover -s tests -v
+
+[STEP 02] 02 - SAST Bandit
+Runner type : Command Line
+Run : Custom script
+Execute step : Only if build status is successful
+
+set -eu
+mkdir -p reports
+set +e
+/opt/teamcity-tools/bandit-venv/bin/bandit -r app -ll -ii \
+    -f txt -o reports/bandit-report.txt
+code=$?
+set -e
+if [ ! -s reports/bandit-report.txt ]; then
+    echo "SAST ERREUR : rapport absent, verifier Bandit."
+    exit 2
+fi
+cat reports/bandit-report.txt
+if [ "$code" -ne 0 ]; then
+    echo "SAST KO : correction obligatoire."
+    exit "$code"
+fi
+echo "SAST OK : controle de securite reussi."
+
+[STEP 03] 03 - Package release
+Runner type : Command Line
+Run : Custom script
+Execute step : Only if build status is successful
+
+set -eu
+mkdir -p livrables
+tar --exclude=__pycache__ --exclude="*.pyc" \
+    -czf livrables/marocdocs-secure.tgz app README.md
+sha256sum livrables/marocdocs-secure.tgz \
+    > livrables/marocdocs-secure.tgz.sha256
+sha256sum -c livrables/marocdocs-secure.tgz.sha256
+echo "PACKAGE OK : release preparee."
+
+[ARTIFACT PATHS]
+reports/bandit-report.txt => security
+livrables/marocdocs-secure.tgz => release
+livrables/marocdocs-secure.tgz.sha256 => release
+
+[CORRIGER LE CODE APRES LE PREMIER BUILD FAILED]
+cp corrections/portal_corrige.py app/portal.py
+python3 -m unittest discover -s tests -v
+git add app/portal.py
+git commit -m "Fix B602: remove shell=True"
+git push
+
+[REJOUER L'INCIDENT B602 - BONUS]
+cp scenarios/portal_vulnerable.py app/portal.py
+git add app/portal.py
+git commit -m "TP3: simulation B602"
+git push

@@ -1,0 +1,44 @@
+EXEMPLES D'OUTPUT - PEDAGOGIQUES ET INDICATIFS
+==============================================
+Ces extraits expliquent ce que l'apprenant doit voir. Ce ne sont pas des logs
+capturés sur votre serveur TeamCity ; les lignes, horodatages et détails
+peuvent varier selon les versions du scanner et de TeamCity.
+
+PREMIER BUILD (VULNERABLE)
+-------------------------
+[Step 01 - Tests Python]
+Ran 3 tests in 0.00xs
+OK
+
+[Step 02 - SAST Bandit]
+Issue: [B602:subprocess_popen_with_shell_equals_true]
+Severity: High   Confidence: High
+SAST KO : correction obligatoire.
+Process exited with code 1
+
+[Step 03 - Package release]
+Skipped (previous build step failed)
+BUILD STATUS: FAILED
+
+Artifacts attendus : security/bandit-report.txt uniquement.
+
+DEUXIEME BUILD (CORRIGE)
+-----------------------
+[Step 01 - Tests Python]
+Ran 3 tests in 0.00xs
+OK
+
+[Step 02 - SAST Bandit]
+Test results:
+    No issues identified.
+SAST OK : controle de securite reussi.
+
+[Step 03 - Package release]
+livrables/marocdocs-secure.tgz: OK
+PACKAGE OK : release preparee.
+BUILD STATUS: SUCCESS
+
+Artifacts attendus :
+security/bandit-report.txt
+release/marocdocs-secure.tgz
+release/marocdocs-secure.tgz.sha256
