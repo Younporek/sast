@@ -1,7 +1,6 @@
-"""Mini-outil MarocDocs : version volontairement vulnérable (TP SAST)."""
+"""Mini-outil MarocDocs : solution corrigee sans execution de shell."""
 
 from pathlib import Path
-import subprocess
 
 
 def compter_fichiers(dossier: str) -> int:
@@ -10,9 +9,4 @@ def compter_fichiers(dossier: str) -> int:
     if not chemin.is_dir():
         raise ValueError("Dossier introuvable")
 
-    # Démonstration d'un anti-pattern : shell=True sur une commande construite.
-    commande = f"find {chemin} -type f"
-    resultat = subprocess.run(
-        commande, shell=True, check=True, capture_output=True, text=True
-    )
-    return len([ligne for ligne in resultat.stdout.splitlines() if ligne])
+    return sum(1 for element in chemin.rglob("*") if element.is_file())
